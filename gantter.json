@@ -1,0 +1,8 @@
+{
+	'name': 'Today',
+	'postURL': 'http://ikcoachbert.nl/_gantter/gantter.php',
+	'authorName': 'FokkeZB',
+	'moreInfoURL': 'http://fokkezb.nl',
+	'type': 'Popup',
+	'iconURL': 'http://wcdn2.dataknet.com/static/resources/icons/set29/fae266a1.png'
+}
