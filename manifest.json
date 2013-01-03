@@ -1,0 +1,8 @@
+{
+	'name': 'Ganttoday',
+	'postURL': 'http://gantter.fokkezb.nl/ganttoday/',
+	'authorName': 'FokkeZB',
+	'moreInfoURL': 'http://gantter.fokkezb.nl/ganttoday/',
+	'type': 'Popup',
+	'iconURL': 'http://wcdn2.dataknet.com/static/resources/icons/set29/fae266a1.png'
+}

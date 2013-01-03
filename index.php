@@ -1,5 +1,10 @@
 <?php 
 
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+	header('Location: http://github.com/fokkezb/Ganttoday');
+	exit;
+}
+
 $projectXML = simplexml_load_string($_POST["projectXML"]);
 
 $sxe = new SimpleXMLElement($projectXML->asXML());
