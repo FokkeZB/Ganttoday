@@ -8,6 +8,8 @@ It displays all tasks in your Gantt projects that:
 
 You can use this extension to turn Gantter in a dependecy-enabled task manager.
 
+Read all about it at http://fokkezb.nl
+
 ## Install
 You can add the hosted extension to your Gantter account directly via:
 
