@@ -20,23 +20,130 @@ $sxe->registerXPathNamespace('n', 'http://schemas.microsoft.com/project');
 
 $project = current($sxe->xpath('/n:Project/n:Tasks/n:Task[n:UID[text()="0"]]'));
 
-$tasks = $sxe->xpath('/n:Project/n:Tasks/n:Task[n:PercentComplete < 100 and n:Summary = 0 and translate(n:Start,"-T:","") <= "' . date('Ymd') . '235959"]');
+$tasks = $sxe->xpath('/n:Project/n:Tasks/n:Task[n:PercentComplete < 100 and n:Summary = 0]');
+
+$waitingForPredecessor = array();
+$predecessors = array();
+
+function waitingForPredecessor($task) {
+	global $sxe, $waitingForPredecessor, $predecessors;
+	
+	$UID = (int) $task->UID;
+	
+	if (isset($waitingForPredecessor[$UID])) {	
+		return $waitingForPredecessor[$UID];
+	}
+	
+	$waitingForPredecessor[$UID] = false;
+
+	if (isset($task->PredecessorLink)) {
+				
+		foreach ($task->PredecessorLink as $predecessorLink) {
+			$PredecessorUID = (int) $predecessorLink->PredecessorUID;
+			
+			if (isset($predecessors[$PredecessorUID]) == false) {				
+				$predecessors[$PredecessorUID] = current($sxe->xpath('/n:Project/n:Tasks/n:Task[n:UID = ' . $predecessorLink->PredecessorUID . ']'));
+			}
+				
+			if ($predecessorLink->Type == 0 && $predecessors[$PredecessorUID]->PercentComplete < 100) {
+				// Voltooi $predecessor om deze taak te Voltooien (Voltooi-om-te-Voltooien, VV)
+				// TODO: Show color/icon/info
+				
+			} elseif ($predecessorLink->Type == 1 && $predecessors[$PredecessorUID]->PercentComplete < 100) {
+				// Voltooi $predecessor om deze taak te Beginnen (Voltooi-om-te-Beginnen, VB)
+				$waitingForPredecessor[$UID] = true;
+				
+			} elseif ($predecessorLink->Type == 2 && $predecessors[$PredecessorUID]->PercentComplete == 0) {
+				// Begin een taak om deze taak te Voltooien (Begin-om-te-Voltooien, BV)
+				// TODO: Show color/icon/info
+				
+			} elseif ($predecessorLink->Type == 3 && $predecessors[$PredecessorUID]->PercentComplete == 0) {
+				// Begin een taak om deze taak te Beginnen (Begin-om-te-Beginnen, BB)
+				$waitingForPredecessor[$UID] = true;
+			}
+		}
+	}
+		
+	return $waitingForPredecessor[$UID];
+}
+
+$waitingForPredecessor = array();
+
+function waitingForConstraint($task) {
+	global $watingForConstraint;
+	
+	$UID = (int) $task->UID;
+	
+	if (isset($watingForConstraint[$UID])) {	
+		return $watingForConstraint[$UID];
+	}
+	
+	$watingForConstraint[$UID] = false;
+
+	// Zo snel als mogelijk
+	if ($task->ConstraintType == 0) {
+		// TODO: Nothing?
+		
+	} elseif ($task->ConstraintType == 1) {
+		// TODO: Show color/icon/info
+
+	// Vang aan precies op
+	} elseif ($task->ConstraintType == 2) {
+			
+		// Moet vandaag of eerder beginnen
+		if ($task->ConstraintDate <= date('Y-m-d') . 'T23:59:59') {
+			// TODO: Show color/icon/info
+			
+		// Mag nog niet beginnen
+		} else {
+			$watingForConstraint[$UID] = true;
+		}
+	
+	// Voltooi precies op
+	} elseif ($task->ConstraintType == 3) {
+			
+		// Moet vandaag of eerder voltooien
+		if ($task->ConstraintDate <= date('Y-m-d') . 'T23:59:59') {
+			// TODO: Show color/icon/info
+		}
+		
+	// Begin niet eerder dan
+	} elseif ($task->ConstraintType == 4) {
+	
+		// Mag nog niet beginnen
+		if ($task->ConstraintDate > date('Y-m-d') . 'T23:59:59') {
+			$watingForConstraint[$UID] = true;
+		}
+	
+	// Begin niet later dan
+	} elseif ($task->ConstraintType == 5) {
+		
+		// Moet vandaag of eerder beginnen
+		if ($task->ConstraintDate <= date('Y-m-d') . 'T23:59:59') {
+			// TODO: Show color/icon/info
+		}
+	
+	// Voltooi niet eerder dan
+	} elseif ($task->ConstraintType == 6) {
+		
+		// Moet vandaag of eerder voltooien
+		if ($task->ConstraintDate <= date('Y-m-d') . 'T23:59:59') {
+			// TODO: Show color/icon/info
+		}
+		
+	// Voltooi niet later dan
+	} elseif ($task->ConstraintType == 7) {
+	
+		// Moet vandaag of eerder voltooien
+		if ($task->ConstraintDate <= date('Y-m-d') . 'T23:59:59') {
+			// TODO: Show color/icon/info
+		}
+	}
+	
+	return $watingForConstraint[$UID];
+}
 
 header('Content-type: text/html');
-
-/* TODO:
-
-	- Instructie om project naar vandaag op te schuiven
-	- Notities tonen
-	
-	- Github
-	- Opmaak
-	- Blog
-
-	- Percentage voltooid wijzigen (ook dmv checkbox op 0% of 100%)
-	- Eventueel notities nog direct kunnen wijzigen
-
- */
 
 ?> 
 <html>
@@ -115,14 +222,6 @@ header('Content-type: text/html');
 					<div id="a1"><?= $project->Name; ?> / <span id="today-title">Today</span></div>
 				</div>
 	
-				<!--
-				<div id="a7">
-					<button id="a8">
-						<div class="n5" title="Save in Gantter">Save in Gantter</div>
-					</button>
-				</div>
-				-->
-	
 				<div id="today-wrap">
 				
 					<table id="today-table">
@@ -139,15 +238,12 @@ header('Content-type: text/html');
 							
 								<?
 								
-								if (isset($task->PredecessorLink)) {
+								if (waitingForPredecessor($task)) {
+									continue;
+								}
 								
-									foreach ($task->PredecessorLink as $predecessorLink) {
-										$predecessor = current($sxe->xpath('/n:Project/n:Tasks/n:Task[n:UID = ' . $predecessorLink->PredecessorUID . ']'));
-										
-										if ($predecessor && $predecessor->PercentComplete < 100) {
-											continue 2;
-										}
-									}
+								if (waitingForConstraint($task)) {
+									continue;
 								}
 								
 								$name = $task->Name;
@@ -158,6 +254,14 @@ header('Content-type: text/html');
 
 									while (true) {
 										$parent = current($sxe->xpath('/n:Project/n:Tasks/n:Task[n:OutlineNumber = "' . $parentOutlineNumber . '"]'));
+										
+										if (waitingForConstraint($parent)) {
+											continue 2;
+										}
+										
+										if (waitingForPredecessor($parent)) {
+											continue 2;
+										}
 										
 										$path = $parent->Name . (empty($path) ? '' : ' / ' . $path);
 										
@@ -175,7 +279,7 @@ header('Content-type: text/html');
 									<td title="<?= $task->ID ?>" class="r3"><?= $task->ID ?></td>
 									<td><?= $task->Name ?><? if (empty($path) == false): ?><span class="today-path"><?= $path ?></span><? endif ?></td>
 									<td><?= $task->PercentComplete ?>%</td>
-									<td><?= $task->Deadline ? $task->Deadline : ($task->ConstraintDate ? $task->ConstraintDate : '&nbsp;') ?></td>
+									<td><?= isset($task->Deadline) ? $task->Deadline : (in_array($task->ConstraintType, array(3,7)) ? $task->ConstraintDate : '&nbsp;') ?></td>
 								</tr>
 							<? endforeach ?>
 						</tbody>
