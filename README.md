@@ -13,7 +13,7 @@ Read all about it at http://fokkezb.nl
 ## Install
 You can add the hosted extension to your Gantter account directly via:
 
-[![Install extension](https://app.gantter.com/images/addExtension.png)](https://app.gantter.com/?extensionUrl=http%3A%2F%2Fgantter.fokkezb.nl%2Fganttoday)
+[![Install extension](https://app.gantter.com/images/addExtension.png)](https://app.gantter.com/?extensionUrl=http%3A%2F%2Fganttoday.fokkezb.nl)
 
 ## About: Gantter
 [Gantter project](http://gantter.com) is a FREE web-based project management tool. You can think of it as a web-based Microsoft Project.
